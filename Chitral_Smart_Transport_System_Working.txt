@@ -1,0 +1,143 @@
+Group: HeadQuater
+Leader:Syed Shabir Hussain Shah
+Phone Number:+92 346 4717032.
+1:Member:Akif Ullah
+Phone Number:03409851884
+2:Abdul Mueen
+Phone Number:03487019880
+3:Mian SanaUllah
+Phone Number:+92 346 9127787
+ 
+
+How Chitral Smart Transport System Works
+
+
+ chitral Smart Transport is a smart transportation platform designed to connect passengers, drivers, vehicles, and transport operators in one system. It helps passengers find suitable transportation according to their location, destination, preferred ride type, vehicle, departure time, and number of seats.
+
+1. Passenger Booking
+
+First, the passenger enters the system and provides their basic information. They select their pickup location and destination. They can then choose the type of ride they want:
+
+- Public Ride – a lower-cost option for general transportation.
+- Shared Ride – passengers share a vehicle and the cost.
+- Private Ride – a more private transportation option.
+
+The passenger can also select a preferred vehicle, such as a Suzuki, Corolla, Coaster, or Local Bus, and choose the number of seats they need.
+
+2. Finding Available Transport
+
+After the passenger searches, the system checks available vehicles and drivers. It compares the passenger's requirements with the available transportation, including:
+
+- Pickup and destination
+- Ride type
+- Vehicle type
+- Available seats
+- Departure time
+- Travel date
+
+The system then displays suitable rides to the passenger.
+
+If the passenger's preferred ride type is not available, the system informs them that their preferred option is unavailable and shows another available ride type. The passenger can then choose the alternative if they want to continue.
+
+3. Fare Calculation
+
+The system calculates the fare according to the selected route, ride type, vehicle, and number of seats.
+
+Different routes have different base fares. The system also uses different fare levels for Public, Shared, and Private rides. Public transportation is designed to have a lower price, shared transportation has a different price, and private transportation has a higher price.
+
+This allows the system to provide suitable fares instead of using the same price for every type of journey.
+
+4. Driver and Seat Management
+
+Drivers can add their vehicle, route, departure time, vehicle type, and available seats to the system.
+
+When a passenger requests a ride, the driver receives the request and can accept or reject it.
+
+If the driver accepts the booking, the passenger's booking is confirmed and the available seats are automatically updated.
+
+For example, if a vehicle has 4 available seats and a passenger books 2 seats, the system will show that 2 seats remain available.
+
+5. Map and GPS
+
+The system also includes a map and GPS feature.
+
+Passengers can use the map to understand the transport route, while drivers can share their GPS location during a trip. This allows the system to connect transport information with the geographical location of the vehicle.
+
+The map can help passengers understand where transportation is operating and where a driver is located.
+
+6. AI Demand Prediction
+
+One of the main intelligent features of Chitral Smart Transport is AI Demand Prediction.
+
+This AI is designed to help transport operators understand where and when more transportation may be needed.
+
+The system can analyze information such as:
+
+- Route
+- Expected number of passengers
+- Departure time
+- Available seats
+- Vehicle capacity
+- Time and seasonal factors
+
+It then estimates the expected transportation demand as Low, Medium, or High.
+
+For example, suppose many passengers are expected to travel from Booni to Chitral Town at a particular time, but only a small number of seats are available. The system can identify that there may be high demand on that route.
+
+Based on this analysis, the system can suggest that the operator consider adding another vehicle or increasing transportation capacity.
+
+The purpose of this AI is to help operators make better decisions about where, when, and how much transport capacity may be required.
+
+In the current prototype, the demand prediction uses demonstration and rule-based data. In a future version, it can be improved using real booking history, GPS information, passenger numbers, and historical transportation data from Chitral.
+
+7. AI Transport Assistant
+
+The second AI feature is the AI Transport Assistant.
+
+Its purpose is to communicate with passengers and operators and provide useful information about the transportation system.
+
+Users can ask questions about topics such as:
+
+- Routes
+- Fares
+- Public, Shared, and Private rides
+- Booking
+- Vehicles
+- Available seats
+- Maps
+- Transportation demand
+- How the system works
+
+For example, a passenger can ask about the difference between a Shared and Private ride or how the booking process works. The AI Transport Assistant identifies the topic of the question and provides the relevant transportation information.
+
+In the current prototype, the assistant works using a rule-based approach. It recognizes transportation-related keywords and topics and provides the appropriate information. In the future, it can be connected to a more advanced AI model.
+
+8. Operator Dashboard
+
+The system also provides an Operator Dashboard.
+
+The operator can use the dashboard to monitor:
+
+- Active vehicles
+- Bookings
+- Routes
+- Vehicle types
+- Available transportation
+- Passenger demand
+- AI demand analysis
+
+This gives the operator a central place to understand what is happening in the transportation network and make better decisions about vehicle allocation.
+
+How Everything Works Together
+
+The complete process can be summarized as:
+
+Passenger enters the system → selects pickup and destination → selects ride type and vehicle → system searches for available transport → fare is calculated → passenger selects a suitable ride → booking request is sent to the driver → driver accepts or rejects → booking is confirmed → available seats are updated → GPS and map can be used during the journey.
+
+At the same time, the two AI systems work in the background:
+
+AI Demand Prediction analyzes transportation information and helps operators understand where and when more vehicles or seats may be needed.
+
+AI Transport Assistant communicates with users and provides information about routes, fares, rides, vehicles, bookings, and other transportation-related questions.
+
+Therefore, Chitral Smart Transport combines passenger booking, driver management, seat management, different ride types, fare calculation, maps, GPS, AI Demand Prediction, and an AI Transport Assistant into one smart transportation platform designed for the needs of Chitral.
