@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#063f38">
+<title>Chitral Smart Transport</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ integrity="sha256-p4NxAoJBhIINfQ3QYb4sQ3z7h2jVf0m0n4f9V0d9Q=" crossorigin=""/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#07110f;color:#f4fffc;font-family:Arial,sans-serif;line-height:1.5;padding-bottom:75px}
+header{background:linear-gradient(135deg,#063f38,#009988);padding:24px 15px;text-align:center;position:sticky;top:0;z-index:1000;box-shadow:0 4px 16px #0008}
+header h1{font-size:26px} header p{font-size:14px;opacity:.9}
+.container{width:95%;max-width:1050px;margin:20px auto}
+.card{background:#111b19;border:1px solid #29423d;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 5px 18px #0005}
+.card h2{color:#00d5bf;margin-bottom:14px;font-size:20px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+input,select{width:100%;padding:13px;border-radius:10px;border:1px solid #35504a;background:#0b1312;color:#fff;font-size:15px;outline:none}
+input:focus,select:focus{border-color:#00b7a3}
+button{border:0;border-radius:10px;padding:12px 15px;font-weight:bold;cursor:pointer;font-size:14px}
+button:disabled{opacity:.55;cursor:not-allowed}
+.primary{background:#009988;color:#fff}.primary:hover{background:#00b7a3}
+.secondary{background:#253936;color:#fff}.danger{background:#9d3b3b;color:#fff}
+.warning{background:#9b741f;color:#fff}
+.full{width:100%;margin-top:12px}
+.hidden{display:none!important}
+.muted{color:#aebdb9;font-size:13px}
+.result{background:#0d211f;border-left:4px solid #00b7a3;border-radius:10px;padding:15px;margin-top:12px}
+.route-card{background:#0c1817;border:1px solid #29433e;border-radius:12px;padding:15px;margin-top:10px}
+.badge{display:inline-block;background:#16483f;color:#8ffbed;padding:3px 8px;border-radius:20px;font-size:12px}
+.stat{background:#0c1817;border:1px solid #29433e;border-radius:12px;padding:15px;text-align:center}
+.stat b{display:block;font-size:26px;color:#00d5bf;margin-top:5px}
+#map{height:430px;border-radius:12px;overflow:hidden;background:#222}
+.status{background:#101c1a;border-radius:10px;padding:12px;margin-top:10px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.tabs button{background:#1c2c29;color:#dceae7}
+.tabs button.active{background:#009988;color:#fff}
+.dashboard{display:none}.dashboard.active{display:block}
+.ai{background:linear-gradient(135deg,#102827,#14201f);border:1px solid #009988;border-radius:12px;padding:17px;margin-top:12px}
+.booking{border:1px solid #34514b;background:#0b1715;padding:13px;border-radius:10px;margin-top:10px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+.request-card{background:#0c1817;border:1px solid #34514b;border-radius:12px;padding:15px;margin-top:10px}
+.request-card.pending{border-left:4px solid #d2a52d}.request-card.accepted{border-left:4px solid #00b7a3}
+.request-card.rejected{border-left:4px solid #d35b5b}
+.live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#00d5bf;margin-right:5px}
+th,td{padding:9px;border-bottom:1px solid #29413d;text-align:left;font-size:13px}
+th{color:#00d5bf}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#0d1514;border-top:1px solid #29413d;display:flex;justify-content:center;gap:4px;z-index:2000;padding:8px}
+.nav button{background:transparent;color:#d5e2df;font-size:11px}
+.nav button:hover{color:#00d5bf}
+label{display:block;margin-bottom:5px;font-size:13px;color:#cbd8d5}
+.form-item{margin-bottom:10px}
+.notice{padding:12px;border-radius:10px;background:#182421;margin-top:10px}
+.success{border-left:4px solid #00b7a3}.error{border-left:4px solid #d35b5b}
+@media(max-width:700px){.grid,.grid3{grid-template-columns:1fr}.card{padding:16px}#map{height:350px}.nav button{font-size:10px;padding:7px 4px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚍 Chitral Smart Transport</h1>
+  <p>Passenger • Driver • Operator • AI • Smart Map</p>
+</header>
+
+<div class="container">
+
+<section class="card">
+  <h2>🔐 Select Dashboard</h2>
+  <div class="tabs">
+    <button class="roleBtn active" data-role="passenger">👤 Passenger</button>
+    <button class="roleBtn" data-role="driver">🧑‍✈️ Driver</button>
+    <button class="roleBtn" data-role="operator">📊 Operator</button>
+  </div>
+  <p class="muted">This prototype keeps demo data in your browser using localStorage. No server is required for the basic demo.</p>
+</section>
+
+<!-- PASSENGER -->
+<section id="passenger" class="dashboard active">
+  <section class="card">
+    <h2>👤 Passenger Dashboard</h2>
+    <div class="grid">
+      <div class="form-item"><label>Your name</label><input id="pName" placeholder="Enter passenger name"></div>
+      <div class="form-item"><label>Phone</label><input id="pPhone" placeholder="03XXXXXXXXX"></div>
+      <div class="form-item"><label>Starting point</label><select id="pFrom"></select></div>
+      <div class="form-item"><label>Destination</label><select id="pTo"></select></div>
+      <div class="form-item"><label>Ride type</label>
+        <select id="pRideType"><option value="Shared">👥 Shared Ride</option><option value="Private">🚗 Private Ride</option></select>
+      </div>
+      <div class="form-item"><label>Vehicle preference</label>
+        <select id="pVehicle"><option value="Any">Any type</option><option>Suzuki</option><option>Corolla</option><option>Coaster</option><option>Local Bus</option></select>
+      </div>
+      <div class="form-item"><label>Departure preference</label><input id="pDeparture" type="time"></div>
+      <div class="form-item"><label>Number of seats</label><input id="pSeats" type="number" min="1" max="10" value="1"></div>
+    </div>
+    <button class="primary full" id="searchBtn">🔎 Find Rides & Request Seats</button>
+    <div id="searchResults"></div>
+  </section>
+
+  <section class="card">
+    <h2>📨 My Ride Requests</h2>
+    <div id="myRequests"><p class="muted">No ride requests yet.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>📋 Confirmed Bookings</h2>
+    <div id="myBookings"><p class="muted">No bookings yet.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>🚐 Available / Live Vehicles</h2>
+    <div id="liveVehicles"><p class="muted">No active driver trips yet.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>🗺️ Smart Chitral Map</h2>
+    <div id="map"></div>
+    <div id="locationStatus" class="status">Location not detected yet. Map tiles: OpenStreetMap France.</div>
+    <button class="secondary full" id="locationBtn">📍 Detect My Location</button>
+  </section>
+
+  <section class="card">
+    <h2>🤖 AI Transport Assistant — Chitral Edition</h2>
+    <p class="muted">A Chitral-focused prototype assistant for routes, fares, bookings, ride types, live trips, demand planning and regional transport information.</p>
+    <div class="grid3" style="margin-top:12px">
+      <div class="stat">Configured Locations<b>10</b></div>
+      <div class="stat">Planning Routes<b>18</b></div>
+      <div class="stat">AI Topics<b>8</b></div>
+    </div>
+    <details class="ai" id="aiSettings">
+      <summary><strong>⚙️ AI Settings</strong> <span id="aiStatus" class="muted"></span></summary>
+      <p class="muted" style="margin:8px 0">Paste your free Groq API key (starts with <code>gsk_</code>). It is saved only in this browser and is never written into the code.</p>
+      <input id="aiKey" type="password" placeholder="gsk_..." autocomplete="off">
+      <div class="grid" style="margin-top:8px">
+        <button class="secondary full" id="aiKeySave">Save key</button>
+        <button class="secondary full" id="aiKeyClear">Remove key</button>
+      </div>
+    </details>
+    <input id="aiQuestion" placeholder="Ask anything: say hi, ask about fares, routes, or general questions" style="margin-top:12px">
+    <button class="primary full" id="aiAskBtn">🤖 Ask AI</button>
+    <div id="aiAnswer"></div>
+    <div class="ai">
+      <strong>📚 Chitral AI Knowledge Base</strong>
+      <p class="muted" style="margin-top:8px">The assistant knows the locations and transport-planning information configured for this prototype.</p>
+      <div class="route-card"><strong>🗺️ Locations:</strong> Chitral Town, Seenlasht, Ayun, Drosh, Booni, Mastuj, Garum Chashma, Khot, Rech and Shagram.</div>
+      <div class="route-card"><strong>👥 Passenger planning:</strong> route matching, preferred departure time, vehicle preference, seat requests, driver acceptance, confirmed bookings and private/shared ride alternatives.</div>
+      <div class="route-card"><strong>💰 Configured fares:</strong> Seenlasht ↔ Chitral Rs 150 • Ayun ↔ Chitral Rs 250 • Drosh ↔ Chitral Rs 350 • Booni ↔ Chitral Rs 700. Other configured routes have their own prototype fare values.</div>
+      <div class="route-card"><strong>📊 Regional context:</strong> PBS Census-2023 reports 278,328 people in Lower Chitral and 195,528 in Upper Chitral. It also reports very low population density in both districts, which is relevant context for distributed transport planning.</div>
+      <div class="notice"><strong>⚠️ Data transparency:</strong> Census figures are source-backed. Route demand estimates in this prototype are demonstration assumptions and should not be presented as official passenger counts.</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>📈 AI Demand Prediction — Chitral Region</h2>
+    <p class="muted">Uses route-specific prototype demand profiles, time windows, seasonal planning factors, expected passengers and available capacity.</p>
+    <div class="grid">
+      <div class="form-item"><label>Route for prediction</label><select id="demandRoute"></select></div>
+      <div class="form-item"><label>Expected passengers</label><input id="passengers" type="number" min="0" step="1" placeholder="Leave blank for profile estimate"></div>
+      <div class="form-item"><label>Preferred departure</label><input id="demandTime" type="time"></div>
+      <div class="form-item"><label>Vehicle capacity available</label><input id="demandCapacity" type="number" min="0" step="1" placeholder="Example: 40"></div>
+    </div>
+    <button class="primary full" id="demandBtn">🤖 Analyze Demand & Suggest Transport</button>
+    <div id="demandResult"></div>
+    <div class="ai">
+      <strong>🧠 What the prototype AI considers</strong>
+      <div class="grid" style="margin-top:10px">
+        <div class="route-card">🕐 <strong>Time of day</strong><br><span class="muted">Morning, midday, evening and off-peak factors.</span></div>
+        <div class="route-card">🌦️ <strong>Season</strong><br><span class="muted">Conservative winter/summer planning factors.</span></div>
+        <div class="route-card">💺 <strong>Capacity</strong><br><span class="muted">Active vehicle seats plus additional capacity entered by the operator.</span></div>
+        <div class="route-card">🛣️ <strong>Route profile</strong><br><span class="muted">Different prototype baselines for local, southern and Upper Chitral corridors.</span></div>
+      </div>
+      <div class="notice"><strong>Model type:</strong> hybrid. The app computes demand features (route baseline, time window, season, live seats, capacity gap) and a live large language model (Groq, OpenAI GPT-OSS 120B) reasons over them to give the demand level and a recommendation. Baselines are synthetic demo data, not official ridership; real booking history would improve accuracy.</div>
+    </div>
+    <div id="demandDataset" class="ai"></div>
+  </section>
+</section>
+
+<!-- DRIVER -->
+<section id="driver" class="dashboard">
+  <section class="card">
+    <h2>🧑‍✈️ Driver Dashboard</h2>
+    <div class="grid">
+      <div class="form-item"><label>Driver full name</label><input id="dName" placeholder="Enter driver name"></div>
+      <div class="form-item"><label>Phone number</label><input id="dPhone" placeholder="03XXXXXXXXX"></div>
+      <div class="form-item"><label>Vehicle number</label><input id="dVehicleNo" value="CT-100"></div>
+      <div class="form-item"><label>Driving licence / ID reference</label><input id="dLicence" placeholder="Demo reference only"></div>
+      <div class="form-item"><label>Vehicle type</label>
+        <select id="dVehicleType"><option>Suzuki</option><option>Corolla</option><option>Coaster</option><option>Local Bus</option></select>
+      </div>
+      <div class="form-item"><label>From</label><select id="dFrom"></select></div>
+      <div class="form-item"><label>To</label><select id="dTo"></select></div>
+      <div class="form-item"><label>Total seats</label><input id="dSeats" type="number" min="1" value="4"></div>
+      <div class="form-item"><label>Fare per passenger (Rs) — route default</label><input id="dFare" type="number" min="0" value="150"></div>
+      <div class="form-item"><label>Departure time</label><input id="dDeparture" type="time"></div>
+      <div class="form-item"><label>Departure date</label><input id="dDate" type="date"></div>
+    </div>
+    <button class="primary" id="startTripBtn">🟢 Start Trip</button>
+    <button class="danger" id="endTripBtn">🔴 End Trip</button>
+    <button class="secondary" id="driverLocationBtn">📍 Update GPS Location</button>
+    <div id="driverStatus" class="status">Ready. Fill your trip information.</div>
+  </section>
+
+  <section class="card">
+    <h2>👥 Passenger Bookings for My Vehicle</h2>
+    <div id="driverBookings"><p class="muted">No passenger bookings for this vehicle.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>📨 Incoming Seat Requests</h2>
+    <p class="muted">Passengers request seats first. You accept or reject each request here.</p>
+    <div id="incomingRequests"></div>
+  </section>
+
+  <section class="card">
+    <h2>📍 Live Location Sharing</h2>
+    <p class="muted">Share your GPS location while the trip is active.</p>
+    <button class="primary" id="shareLocationBtn">📡 Share Live Location</button>
+    <button class="secondary" id="stopLocationBtn">⏹ Stop Sharing</button>
+    <div id="sharingStatus" class="status">Live location sharing is off.</div>
+  </section>
+
+  <section class="card">
+    <h2>📊 Driver Statistics</h2>
+    <div class="grid3">
+      <div class="stat">Trips<b id="driverTrips">0</b></div>
+      <div class="stat">Bookings<b id="driverBookingCount">0</b></div>
+      <div class="stat">Seats Filled<b id="driverSeatsFilled">0</b></div>
+    </div>
+  </section>
+</section>
+
+<!-- OPERATOR -->
+<section id="operator" class="dashboard">
+  <section class="card">
+    <h2>📊 Operator Dashboard</h2>
+    <div class="grid3">
+      <div class="stat">Active Vehicles<b id="opVehicles">0</b></div>
+      <div class="stat">Bookings<b id="opBookings">0</b></div>
+      <div class="stat">Routes<b id="opRoutes">0</b></div>
+      <div class="stat">Locations<b id="opLocations">0</b></div>
+      <div class="stat">Vehicle Types<b id="opTypes">4</b></div>
+      <div class="stat">AI System<b>ON</b></div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>🚐 Active Vehicle Management</h2>
+    <div id="operatorVehicles"></div>
+  </section>
+  <section class="card">
+    <h2>📋 All Bookings</h2>
+    <div id="operatorBookings"></div>
+  </section>
+  <section class="card">
+    <h2>🧠 AI Demand Overview</h2>
+    <div id="operatorDemand" class="ai"></div>
+  </section>
+</section>
+
+<section class="card">
+  <h2>ℹ️ About Chitral Smart Transport</h2>
+  <div class="notice">
+    This is a functional local prototype combining passenger booking, driver trips,
+    shared seat management, route information, GPS/map display, operator monitoring,
+    and rule-based AI demonstrations.
+  </div>
+</section>
+
+</div>
+
+<div class="nav">
+  <button data-scroll="passenger">👤 Passenger</button>
+  <button data-scroll="driver">🧑‍✈️ Driver</button>
+  <button data-scroll="operator">📊 Operator</button>
+  <button data-scroll="passenger">🗺️ Map</button>
+  <button data-scroll="passenger">🤖 AI</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+ crossorigin=""></script>
+<script>
+"use strict";
+
+// CLEAN DEMO RESET: remove data left by previous demo attempts in this browser.
+// This keeps the project code/routes intact but starts the presentation with empty data.
+(function cleanPreviousDemoData(){
+  const demoKeys=["cst_vehicles","cst_bookings","cst_driver_trips","cst_ride_requests","cst_driver_profiles"];
+  demoKeys.forEach(k=>localStorage.removeItem(k));
+})();
+
+const locations={
+ "Chitral Town":[35.8518,71.7864],"Seenlasht":[35.9400,71.8200],"Ayun":[35.6735,71.7737],"Drosh":[35.5668,71.7906],
+ "Booni":[36.2500,72.2600],"Mastuj":[36.2800,72.5300],"Garum Chashma":[36.1100,71.7000],
+ "Khot":[36.483358,72.434499],"Rech":[36.596463,72.527917],"Shagram":[36.451629,72.421806]
+};
+
+const routeData={
+ "Chitral Town-Seenlasht":[["Coaster","08:00",150,35,14],["Local Bus","09:00",150,40,24],["Suzuki","10:00",150,45,4],["Corolla","11:00",150,40,4]],
+ "Chitral Town-Ayun":[["Coaster","10:30",250,40,4],["Local Bus","11:00",250,45,6],["Suzuki","12:00",250,50,4],["Corolla","13:00",250,45,4]],
+ "Chitral Town-Drosh":[["Coaster","09:30",350,60,4],["Local Bus","10:00",350,75,6],["Suzuki","11:00",350,80,4],["Corolla","12:00",350,65,4]],
+ "Chitral Town-Booni":[["Coaster","08:00",700,135,14],["Local Bus","08:30",700,150,24],["Suzuki","09:00",700,160,4],["Corolla","09:30",700,145,4]],
+ "Chitral Town-Mastuj":[["Coaster","07:30",700,160,14],["Local Bus","08:00",700,180,24],["Suzuki","08:30",700,190,4],["Corolla","09:00",700,175,4]],
+ "Chitral Town-Garum Chashma":[["Coaster","09:00",400,100,14],["Local Bus","09:30",400,120,24],["Suzuki","10:00",400,130,4],["Corolla","10:30",400,115,4]],
+ "Chitral Town-Khot":[["Coaster","07:00",500,180,14],["Local Bus","07:30",500,210,24],["Suzuki","08:00",500,220,4],["Corolla","08:30",500,200,4]],
+ "Chitral Town-Rech":[["Coaster","06:30",550,210,14],["Local Bus","07:00",550,240,24],["Suzuki","07:30",550,250,4],["Corolla","08:00",550,230,4]],
+ "Chitral Town-Shagram":[["Coaster","07:00",500,180,14],["Local Bus","07:30",500,210,24],["Suzuki","08:00",500,220,4],["Corolla","08:30",500,200,4]],
+ "Khot-Rech":[["Suzuki","09:00",150,45,4],["Coaster","10:00",200,35,14]],
+ "Khot-Shagram":[["Suzuki","09:30",120,25,4],["Coaster","11:00",150,20,14]],
+ "Rech-Shagram":[["Suzuki","10:00",180,50,4],["Coaster","11:30",220,40,14]]
+};
+
+
+// ============================================================
+// CHITRAL-SPECIFIC AI KNOWLEDGE + DEMAND DATA
+// Source-backed regional facts are separated from demo planning estimates.
+// Demo estimates are illustrative and are NOT official ridership counts.
+// ============================================================
+const chitralAIData = {
+  region: {
+    lowerChitralPopulation2023: 278328,
+    upperChitralPopulation2023: 195528,
+    lowerChitralDensity2023: 50,
+    upperChitralDensity2023: 23,
+    sourceNote: "Population/density figures are from Pakistan Bureau of Statistics Census-2023. Demand figures below are prototype planning estimates."
+  },
+  places: {
+    "Chitral Town": "Main urban/service hub used as the central reference point in this prototype.",
+    "Ayun": "Important valley settlement south of Chitral Town and a route included in the prototype.",
+    "Drosh": "Major southern Chitral route point included in the prototype.",
+    "Seenlasht": "Local route point near Chitral Town included in the prototype.",
+    "Booni": "Major Upper Chitral route point included in the prototype.",
+    "Mastuj": "Upper Chitral route point included in the prototype.",
+    "Garum Chashma": "Western Chitral route point included in the prototype.",
+    "Khot": "Upper Chitral route point included in the prototype.",
+    "Rech": "Upper Chitral route point included in the prototype.",
+    "Shagram": "Upper Chitral route point included in the prototype."
+  },
+  // These are transparent demo assumptions for showing how an AI planner
+  // could reason about demand. They are not measured passenger counts.
+  demandProfiles: {
+    "Chitral Town → Seenlasht": {base:28, morning:1.35, midday:1.00, evening:1.25, weekend:1.10, winter:1.05, summer:1.15, capacity:42, note:"Short local corridor; commuter-oriented demo profile."},
+    "Seenlasht → Chitral Town": {base:30, morning:1.20, midday:1.00, evening:1.35, weekend:1.10, winter:1.05, summer:1.15, capacity:42, note:"Return-flow demo profile toward the town centre."},
+    "Chitral Town → Ayun": {base:32, morning:1.30, midday:1.10, evening:1.25, weekend:1.15, winter:1.05, summer:1.20, capacity:48, note:"Local/regional corridor; higher daytime demo demand."},
+    "Ayun → Chitral Town": {base:34, morning:1.20, midday:1.10, evening:1.35, weekend:1.15, winter:1.05, summer:1.20, capacity:48, note:"Return-flow demo profile."},
+    "Chitral Town → Drosh": {base:42, morning:1.35, midday:1.15, evening:1.30, weekend:1.15, winter:0.95, summer:1.20, capacity:62, note:"Longer southern corridor; winter factor is intentionally conservative."},
+    "Drosh → Chitral Town": {base:44, morning:1.20, midday:1.15, evening:1.40, weekend:1.15, winter:0.95, summer:1.20, capacity:62, note:"Return-flow demo profile."},
+    "Chitral Town → Booni": {base:38, morning:1.35, midday:1.10, evening:1.20, weekend:1.20, winter:0.90, summer:1.25, capacity:70, note:"Upper Chitral corridor; seasonal planning assumption."},
+    "Booni → Chitral Town": {base:40, morning:1.20, midday:1.10, evening:1.35, weekend:1.20, winter:0.90, summer:1.25, capacity:70, note:"Return-flow demo profile."},
+    "Chitral Town → Mastuj": {base:34, morning:1.35, midday:1.05, evening:1.20, weekend:1.15, winter:0.88, summer:1.25, capacity:70, note:"Upper Chitral planning profile."},
+    "Mastuj → Chitral Town": {base:36, morning:1.20, midday:1.05, evening:1.35, weekend:1.15, winter:0.88, summer:1.25, capacity:70, note:"Return-flow demo profile."},
+    "Chitral Town → Garum Chashma": {base:24, morning:1.30, midday:1.10, evening:1.20, weekend:1.15, winter:0.92, summer:1.25, capacity:48, note:"Western corridor planning profile."},
+    "Chitral Town → Khot": {base:20, morning:1.30, midday:1.05, evening:1.20, weekend:1.10, winter:0.88, summer:1.20, capacity:48, note:"Upper Chitral local/regional planning profile."},
+    "Chitral Town → Rech": {base:18, morning:1.30, midday:1.05, evening:1.20, weekend:1.10, winter:0.88, summer:1.20, capacity:48, note:"Upper Chitral planning profile."},
+    "Chitral Town → Shagram": {base:20, morning:1.30, midday:1.05, evening:1.20, weekend:1.10, winter:0.88, summer:1.20, capacity:48, note:"Upper Chitral planning profile."},
+    "Khot → Rech": {base:14, morning:1.25, midday:1.00, evening:1.20, weekend:1.10, winter:0.90, summer:1.20, capacity:28, note:"Smaller local corridor demo profile."},
+    "Khot → Shagram": {base:12, morning:1.25, midday:1.00, evening:1.20, weekend:1.10, winter:0.90, summer:1.20, capacity:28, note:"Smaller local corridor demo profile."},
+    "Rech → Shagram": {base:12, morning:1.25, midday:1.00, evening:1.20, weekend:1.10, winter:0.90, summer:1.20, capacity:28, note:"Smaller local corridor demo profile."}
+  },
+  planningRules: [
+    "Morning planning window: 07:00–10:00",
+    "Midday planning window: 10:00–15:00",
+    "Evening planning window: 15:00–19:00",
+    "Weekend multiplier is a prototype assumption for demonstration.",
+    "Winter/summer multipliers are planning assumptions, not measured seasonal ridership.",
+    "The model should be retrained/recalibrated with real booking and GPS data before operational use."
+  ],
+  assistantTopics: {
+    route: "I can explain the configured Chitral routes and help compare a passenger's selected origin and destination.",
+    fare: "I can show the prototype fare table for configured routes.",
+    booking: "I can explain the request → driver acceptance → confirmed booking workflow.",
+    private: "Private rides are shown only when a matching private driver is active. If only a shared driver exists on the exact route, the prototype can offer the shared ride as an alternative.",
+    demand: "I can use the Chitral demo demand profiles to estimate a planning level and compare expected passengers with available capacity.",
+    seasonal: "The prototype includes conservative seasonal multipliers for winter and summer. These are planning assumptions, not official forecasts.",
+    data: "The AI uses route, time, expected passengers, vehicle capacity, configured fares, and the prototype's Chitral demand profiles. It does not claim to have live government ridership data.",
+    map: "The map contains the Chitral locations configured in this prototype. GPS sharing is available when a driver starts a trip."
+  }
+};
+
+function getChitralProfile(route) {
+  return chitralAIData.demandProfiles[route] || null;
+}
+
+function getDemandWindow(time) {
+  const m=timeToMinutes(time);
+  if(m===null) return {name:"midday", label:"10:00–15:00"};
+  if(m>=420 && m<600) return {name:"morning", label:"07:00–10:00"};
+  if(m>=600 && m<900) return {name:"midday", label:"10:00–15:00"};
+  if(m>=900 && m<1140) return {name:"evening", label:"15:00–19:00"};
+  return {name:"offPeak", label:"off-peak"};
+}
+
+function getSeasonMultiplier() {
+  const month=new Date().getMonth()+1;
+  if([12,1,2].includes(month)) return {name:"winter",label:"winter",multiplier:1};
+  if([6,7,8].includes(month)) return {name:"summer",label:"summer",multiplier:1};
+  return {name:"shoulder",label:"spring/autumn",multiplier:1};
+}
+
+function estimateChitralDemand(route,time,passengerInput) {
+  const profile=getChitralProfile(route);
+  const window=getDemandWindow(time);
+  const season=getSeasonMultiplier();
+  if(!profile) return null;
+  const observedInput=Number(passengerInput)||0;
+  const estimated=Math.round(
+    profile.base *
+    (profile[window.name] || 1) *
+    (profile[season.name] || 1) *
+    (window.name==="offPeak" ? 0.85 : 1)
+  );
+  return {
+    profile, window, season,
+    baseline:estimated,
+    expected:observedInput>0 ? observedInput : estimated,
+    capacity:profile.capacity
+  };
+}
+
+const KEYS={vehicles:"cst_vehicles",bookings:"cst_bookings",driverTrips:"cst_driver_trips",requests:"cst_ride_requests",drivers:"cst_driver_profiles"};
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+
+function read(key){try{let v=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(v)?v:[]}catch{return[]}}
+function write(key,v){localStorage.setItem(key,JSON.stringify(v));}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function fillSelect(select,blank="Select location"){
+ select.innerHTML="<option value=''>"+blank+"</option>";
+ Object.keys(locations).forEach(x=>{let o=document.createElement("option");o.value=x;o.textContent=x;select.appendChild(o)});
+}
+function getRoute(from,to){
+ let k=from+"-"+to;
+ if(routeData[k]) return {key:k,data:routeData[k]};
+ k=to+"-"+from;
+ if(routeData[k]) return {key:k,data:routeData[k]};
+ return null;
+}
+
+let map=null,myMarker=null,routeLine=null;
+
+function initMap(){
+ if(typeof L==="undefined"){ $("map").innerHTML="<div class='status'>Map library could not load. Internet is required for the Leaflet map.</div>";return; }
+ map=L.map("map").setView(locations["Chitral Town"],9);
+ const baseLayer = L.tileLayer(
+    "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png",
+    {
+      maxZoom:19,
+      attribution:"© OpenStreetMap contributors, © OpenStreetMap France"
+    }
+  ).addTo(map);
+
+  baseLayer.on("tileerror",()=>{
+    $("locationStatus").textContent =
+      "⚠️ Map tiles could not be loaded. Check your internet connection or refresh the page.";
+  });
+ Object.entries(locations).forEach(([name,c])=>L.marker(c).addTo(map).bindPopup("<b>"+esc(name)+"</b><br>Chitral transport location"));
+ setTimeout(()=>map.invalidateSize(),300);
+}
+
+function showRouteOnMap(from,to){
+ if(!map)return;
+ if(routeLine){map.removeLayer(routeLine);routeLine=null}
+ if(locations[from]&&locations[to]){
+  routeLine=L.polyline([locations[from],locations[to]],{weight:6,opacity:.9}).addTo(map);
+  map.fitBounds(routeLine.getBounds(),{padding:[30,30]});
+ }
+}
+
+function timeToMinutes(t){
+  if(!t) return null;
+  const p=t.split(":").map(Number);
+  return p.length===2 ? p[0]*60+p[1] : null;
+}
+function formatTime(t){
+  const p=t.split(":").map(Number), h=p[0], m=p[1];
+  return String((h%12)||12).padStart(2,"0")+":"+String(m).padStart(2,"0")+" "+(h>=12?"PM":"AM");
+}
+function searchTransport(){
+ const from=$("pFrom").value,to=$("pTo").value,vehicle=$("pVehicle").value,pref=$("pDeparture").value;
+ if(!from||!to){$("searchResults").innerHTML="<div class='result error'>⚠️ Select both starting point and destination.</div>";return}
+ if(from===to){$("searchResults").innerHTML="<div class='result error'>⚠️ Starting point and destination must be different.</div>";return}
+ const route=getRoute(from,to);
+ if(!route){$("searchResults").innerHTML="<div class='result error'>❌ No route is available for this origin and destination yet.</div>";return}
+ const desired=timeToMinutes(pref);
+
+ const active=read(KEYS.vehicles).filter(v=>v.route_from===from&&v.route_to===to&&v.status==="on_route");
+ const options=active.map(v=>{
+   const tm=timeToMinutes(v.departure_time);
+   return {type:v.vehicle_type,time:v.departure_time,fare:Number(v.fare),seats:Number(v.available_seats),
+     driver:v.driver_name,phone:v.driver_phone,number:v.vehicle_number,date:v.departure_date,live:true,
+     diff:desired===null||tm===null?99999:Math.abs(tm-desired),
+     typePenalty:(vehicle==="Any"||v.vehicle_type===vehicle)?0:100000};
+ }).sort((a,b)=>(a.typePenalty-b.typePenalty)||(a.diff-b.diff));
+
+ const scheduleRefs=route.data.map(x=>({type:x[0],time:x[1],fare:x[2],seats:x[4],
+   diff:desired===null?99999:Math.abs(timeToMinutes(x[1])-desired),
+   typePenalty:(vehicle==="Any"||x[0]===vehicle)?0:100000
+ })).sort((a,b)=>(a.typePenalty-b.typePenalty)||(a.diff-b.diff));
+
+ let out="<div class='result'><strong>🚍 Nearest rides</strong><br>"+esc(from)+" → "+esc(to);
+ if(pref)out+=`<br>🕐 Your preferred departure: <strong>${formatTime(pref)}</strong>`;
+ out+="<br>⭐ Active drivers are ranked by closeness to your preferred time. Vehicle preference is used first, but other vehicle types are also shown if needed.</div>";
+
+ if(options.length){
+   options.forEach(x=>{
+     const near=desired===null?"":(x.diff===0?" • ⭐ Exact time":` • 🤖 ${x.diff} min from preference`);
+     const prefBadge=x.typePenalty===0?" <span class='badge'>Preferred type</span>":" <span class='badge'>Alternative type</span>";
+     out+=`<div class="route-card"><strong>${esc(x.type)}</strong>${prefBadge} <span class='badge'>🟢 DRIVER AVAILABLE</span><br>
+     🧑‍✈️ <strong>${esc(x.driver||"Driver")}</strong> • 🚐 ${esc(x.number)}<br>
+     🛣️ ${esc(from)} → ${esc(to)}<br>
+     🕐 Driver departure: <strong>${formatTime(x.time)}</strong>${near}<br>
+     📅 ${esc(x.date||"Today")} • 💰 <strong>Rs ${x.fare}</strong><br>
+     💺 Available seats: <strong>${x.seats}</strong> • 📞 ${esc(x.phone||"Not provided")}
+     <button class="primary full" onclick="requestLiveSeats('${esc(x.number)}')">📨 Request ${Number($("pSeats").value)||1} Seat(s) From This Driver</button></div>`;
+   });
+ } else out+="<div class='result error'>⚠️ No live driver is currently available. The nearest scheduled departures are shown below. Booking opens when a real driver starts the trip.</div>";
+
+ out+="<div class='result'><strong>🗓️ Nearest scheduled departures</strong><br><span class='muted'>Schedule references are not bookings. They become bookable when a driver starts a matching trip.</span></div>";
+ scheduleRefs.slice(0,5).forEach(x=>{
+   const near=desired===null?"":(x.diff===0?" • ⭐ Exact time":` • ${x.diff} min from preference`);
+   out+=`<div class="route-card"><strong>${esc(x.type)}</strong> <span class='badge'>Scheduled</span><br>
+   🕐 Departure: <strong>${formatTime(x.time)}</strong>${near}<br>💰 Fare: <strong>Rs ${x.fare}</strong> • 💺 Capacity: ${x.seats}<br>
+   <span class="muted">🔒 Start the driver's trip to make this ride bookable.</span></div>`;
+ });
+ $("searchResults").innerHTML=out;showRouteOnMap(from,to);
+}
+function getRequests(){return read(KEYS.requests)}
+function saveRequests(v){write(KEYS.requests,v)}
+
+function requestSeats(routeIndex){
+ const from=$("pFrom").value,to=$("pTo").value,route=getRoute(from,to);
+ if(!route||!route.data[routeIndex])return;
+ const passenger=$("pName").value.trim()||"Guest Passenger";
+ const phone=$("pPhone").value.trim(),seats=Number($("pSeats").value);
+ const pref=$("pDeparture").value||"Any time",vehiclePref=$("pVehicle").value;
+ if(!Number.isInteger(seats)||seats<1||seats>10){alert("Enter a valid number of seats.");return}
+ const req={id:id(),passenger,phone,from,to,seats,vehicle_preference:vehiclePref,
+   departure_preference:pref,requested_vehicle:route.data[routeIndex][0],
+   fare:route.data[routeIndex][2],status:"pending",driverId:null,
+   createdAt:new Date().toISOString()};
+ const reqs=getRequests();reqs.push(req);saveRequests(reqs);
+ alert("📨 Request sent. A matching driver can accept it.");
+ renderAll();
+}
+
+function requestLiveSeats(vehicleNumber){
+ const v=read(KEYS.vehicles).find(x=>x.vehicle_number===vehicleNumber&&x.status==="on_route");
+ if(!v){alert("This driver is no longer active. Search again.");return}
+ const passenger=$("pName").value.trim()||"Guest Passenger",phone=$("pPhone").value.trim(),seats=Number($("pSeats").value),pref=$("pDeparture").value||"Any time";
+ if(!Number.isInteger(seats)||seats<1||seats>10){alert("Enter a valid number of seats.");return}
+ if(seats>Number(v.available_seats)){alert("Not enough seats are available.");return}
+ const reqs=read(KEYS.requests);
+ if(reqs.some(r=>r.status==="pending"&&r.driverId===v.vehicle_number&&r.passenger.toLowerCase()===passenger.toLowerCase())){alert("You already have a pending request for this driver.");return}
+ reqs.push({id:id(),passenger,phone,from:v.route_from,to:v.route_to,seats,vehicle_preference:$("pVehicle").value,
+   departure_preference:pref,requested_vehicle:v.vehicle_type,fare:Number(v.fare),status:"pending",
+   driverId:v.vehicle_number,driver_name:v.driver_name,vehicle_number:v.vehicle_number,driver_phone:v.driver_phone||"",
+   driver_departure:v.departure_time||"",driver_departure_date:v.departure_date||"Today",createdAt:new Date().toISOString()});
+ saveRequests(reqs);
+ alert("📨 Request sent to "+v.driver_name+". It will be booked only after the driver accepts it.");
+ renderAll();
+}
+function renderRequests(){
+ const passenger=($("pName").value.trim()||"Guest Passenger").toLowerCase();
+ const reqs=getRequests().filter(r=>r.passenger.toLowerCase()===passenger);
+ $("myRequests").innerHTML=reqs.length?reqs.slice().reverse().map(r=>{
+  const message=r.status==="accepted"?"<strong>✅ Your ride is successfully booked!</strong>":r.status==="rejected"?"<strong>❌ Driver rejected this request.</strong>":"⏳ Waiting for driver acceptance — your seat is not booked yet.";
+  return `<div class="request-card ${esc(r.status)}"><strong>📨 ${esc(r.from)} → ${esc(r.to)}</strong><br>
+  👤 ${esc(r.passenger)} • 💺 ${r.seats} seat(s)<br>🧑‍✈️ Driver: <strong>${esc(r.driver_name||"Waiting")}</strong>${r.vehicle_number?" • 🚐 "+esc(r.vehicle_number):""}<br>
+  🚗 ${esc(r.requested_vehicle||r.vehicle_preference)}<br>🕐 Your preference: ${esc(r.departure_preference||"Any time")}
+  ${r.driver_departure?`<br>🕐 Driver departure: <strong>${formatTime(r.driver_departure)}</strong>`:""}
+  ${r.status==="accepted"?` • 📅 ${esc(r.driver_departure_date||"Today")}`:""}<br>💰 Fare: <strong>Rs ${Number(r.fare)||0}</strong><br>
+  <span class="badge">${esc(r.status.toUpperCase())}</span><div class="notice ${r.status==="accepted"?"success":""}">${message}</div></div>`;
+ }).join(""):"<p class='muted'>No ride requests yet.</p>";
+}
+function renderIncomingRequests(){
+ const number=$("dVehicleNo").value.trim();
+ const reqs=getRequests().filter(r=>r.status==="pending"&&
+   (!r.driverId||r.driverId===number));
+ $("incomingRequests").innerHTML=reqs.length?reqs.map(r=>`
+ <div class="request-card pending">
+ <strong>👤 ${esc(r.passenger)}</strong> requested <strong>${r.seats} seat(s)</strong><br>
+ 🛣️ ${esc(r.from)} → ${esc(r.to)}<br>
+ 🚗 ${esc(r.vehicle_preference)} • 🕐 ${esc(r.departure_preference)}<br>
+ 📞 ${esc(r.phone||"Not provided")}<br><br>
+ <button class="primary" onclick="acceptRequest('${r.id}')">✅ Accept Request</button>
+ <button class="danger" onclick="rejectRequest('${r.id}')">❌ Reject</button>
+ </div>`).join(""):"<p class='muted'>No pending passenger requests.</p>";
+}
+
+function acceptRequest(requestId){
+ const number=$("dVehicleNo").value.trim(),vehicles=read(KEYS.vehicles),vehicle=vehicles.find(v=>v.vehicle_number===number&&v.status==="on_route");
+ if(!vehicle){alert("Start your trip first.");return}
+ const reqs=getRequests(),req=reqs.find(r=>r.id===requestId);
+ if(!req||req.status!=="pending")return;
+ if(req.driverId&&req.driverId!==number){alert("This request is assigned to another driver.");return}
+ if(req.from!==vehicle.route_from||req.to!==vehicle.route_to){alert("This request does not match your active route.");return}
+ if(Number(vehicle.available_seats)<Number(req.seats)){alert("Not enough seats available.");return}
+ vehicle.available_seats-=Number(req.seats);
+ Object.assign(req,{status:"accepted",driverId:vehicle.vehicle_number,driver_name:vehicle.driver_name,vehicle_number:vehicle.vehicle_number,
+   driver_phone:vehicle.driver_phone||"",driver_departure:vehicle.departure_time||"",driver_departure_date:vehicle.departure_date||"Today",acceptedAt:new Date().toISOString()});
+ write(KEYS.vehicles,vehicles);saveRequests(reqs);
+ const bookings=read(KEYS.bookings);
+ bookings.push({id:id(),name:req.passenger,phone:req.phone,from:req.from,to:req.to,vehicle:vehicle.vehicle_type,
+   driverName:vehicle.driver_name,driverPhone:vehicle.driver_phone||"",departure:vehicle.departure_time||"Any time",
+   departureDate:vehicle.departure_date||"Today",fare:Number(vehicle.fare),rideType:"Requested Ride",seats:Number(req.seats),
+   vehicleId:vehicle.vehicle_number,status:"Confirmed",requestId:req.id,createdAt:new Date().toISOString()});
+ write(KEYS.bookings,bookings);
+ alert("✅ Request accepted. "+req.passenger+"'s seat is booked for "+(vehicle.departure_time||"the scheduled")+" departure.");
+ renderAll();
+}
+function rejectRequest(requestId){
+ const reqs=getRequests(),req=reqs.find(r=>r.id===requestId);
+ if(!req)return;
+ req.status="rejected";req.driverId=$("dVehicleNo").value.trim();
+ req.driver_name=$("dName").value.trim()||"Driver";req.vehicle_number=req.driverId;
+ saveRequests(reqs);renderAll();
+}
+
+let locationWatchId=null;
+function shareDriverLocation(){
+ const number=$("dVehicleNo").value.trim();
+ const active=read(KEYS.vehicles).find(v=>v.vehicle_number===number&&v.status==="on_route");
+ if(!active){$("sharingStatus").textContent="⚠️ Start the trip first.";return}
+ if(!navigator.geolocation){$("sharingStatus").textContent="❌ GPS unavailable.";return}
+ if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId);
+ $("sharingStatus").innerHTML="📡 Requesting GPS permission...";
+ locationWatchId=navigator.geolocation.watchPosition(pos=>{
+   const vs=read(KEYS.vehicles),v=vs.find(x=>x.vehicle_number===number);
+   if(!v)return;
+   v.latitude=pos.coords.latitude;v.longitude=pos.coords.longitude;
+   v.accuracy=Math.round(pos.coords.accuracy);v.location_shared=true;
+   v.updated_at=new Date().toISOString();write(KEYS.vehicles,vs);
+   $("sharingStatus").innerHTML=`<span class="live-dot"></span><strong>LIVE</strong> • ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+   renderAll();
+ },()=>{$("sharingStatus").textContent="❌ GPS permission/location unavailable."},
+ {enableHighAccuracy:true,maximumAge:3000,timeout:10000});
+}
+function stopDriverLocation(){
+ if(locationWatchId!==null){navigator.geolocation.clearWatch(locationWatchId);locationWatchId=null}
+ const n=$("dVehicleNo").value.trim();
+ write(KEYS.vehicles,read(KEYS.vehicles).map(v=>v.vehicle_number===n?({...v,location_shared:false}):v));
+ $("sharingStatus").textContent="⏹ Live location sharing stopped.";renderAll();
+}
+
+
+function renderBookings(){
+ const passenger=($("pName").value.trim()||"Guest Passenger").toLowerCase();
+ const b=read(KEYS.bookings).filter(x=>(x.name||"").toLowerCase()===passenger);
+ if(!b.length){$("myBookings").innerHTML="<p class='muted'>No confirmed bookings yet.</p>";return}
+ $("myBookings").innerHTML=b.slice().reverse().map(x=>`<div class="booking"><strong>🎫 ${esc(x.from)} → ${esc(x.to)}</strong><br>
+ 👤 ${esc(x.name)} • 🧑‍✈️ ${esc(x.driverName||"Driver")} • 🚐 ${esc(x.vehicle)} (${esc(x.vehicleId||"")})<br>
+ 🕐 <strong>Driver departure: ${esc(x.departure)}</strong> • 📅 ${esc(x.departureDate||"Today")}<br>
+ 💰 Rs ${x.fare} • 💺 ${x.seats} seat(s)<br>📞 Driver: ${esc(x.driverPhone||"Not provided")}<br>
+ <span class="badge">${esc(x.status)}</span></div>`).join("");
+}
+function renderVehicles(){
+ const v=read(KEYS.vehicles).filter(x=>x.status==="on_route");
+ if(!v.length){$("liveVehicles").innerHTML="<p class='muted'>No active driver trips yet.</p>";return}
+ $("liveVehicles").innerHTML=v.map(x=>`<div class="booking">
+ <strong>🟢 ${esc(x.vehicle_type)} — ${esc(x.vehicle_number)}</strong><br>
+ 🧑‍✈️ ${esc(x.driver_name)}<br>
+ 🛣️ ${esc(x.route_from)} → ${esc(x.route_to)}<br>
+ 🕐 Departure: <strong>${esc(x.departure_time||"Any time")}</strong> • 📅 ${esc(x.departure_date||"Today")}<br>
+ 💺 Available seats: <strong>${x.available_seats}</strong> / ${x.total_seats}
+ </div>`).join("");
+}
+
+function detectLocation(){
+ if(!navigator.geolocation){$("locationStatus").textContent="❌ Geolocation is not supported.";return}
+ $("locationStatus").textContent="📡 Detecting location...";
+ navigator.geolocation.getCurrentPosition(pos=>{
+  const {latitude,longitude,accuracy}=pos.coords;
+  if(myMarker)map.removeLayer(myMarker);
+  myMarker=L.marker([latitude,longitude]).addTo(map).bindPopup("📍 You are here").openPopup();
+  map.setView([latitude,longitude],13);
+  $("locationStatus").textContent="✅ Location detected. Accuracy: about "+Math.round(accuracy)+" m";
+ },err=>{
+  $("locationStatus").textContent=err.code===1?"❌ Location permission denied.": "❌ Could not determine your location.";
+ },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+}
+
+function suggestedFare(from,to){const r=getRoute(from,to);return r&&r.data.length?Number(r.data[0][2]):0;}
+
+function startTrip(){
+ const name=$("dName").value.trim()||"Demo Driver",phone=$("dPhone").value.trim(),number=$("dVehicleNo").value.trim()||"CT-100";
+ const type=$("dVehicleType").value,from=$("dFrom").value,to=$("dTo").value,total=Number($("dSeats").value),fareInput=Number($("dFare").value),fare=suggestedFare(from,to)||fareInput;
+ const departure_time=$("dDeparture").value||"Any time",departure_date=$("dDate").value||"Today",licence=$("dLicence").value.trim();
+ if(!from||!to||from===to){$("driverStatus").textContent="⚠️ Select two different locations.";return}
+ if(!Number.isInteger(total)||total<1||fare<0){$("driverStatus").textContent="⚠️ Enter valid seats and fare.";return}
+ const old=read(KEYS.vehicles).filter(v=>v.vehicle_number!==number);
+ const c=locations[from];
+ const vehicle={id:number,vehicle_number:number,driver_name:name,driver_phone:phone,licence_ref:licence,vehicle_type:type,route_from:from,route_to:to,total_seats:total,available_seats:total,fare,departure_time,departure_date,latitude:c[0],longitude:c[1],location_shared:false,status:"on_route",updated_at:new Date().toISOString()};
+ old.push(vehicle);write(KEYS.vehicles,old);
+ let profiles=read(KEYS.drivers).filter(p=>p.vehicle_number!==number);
+ profiles.push({id:number,name,phone,licence_ref:licence,vehicle_type:type,vehicle_number:number});
+ write(KEYS.drivers,profiles);
+ let trips=read(KEYS.driverTrips);trips.push({id:id(),vehicle_number:number,startedAt:new Date().toISOString(),endedAt:null});write(KEYS.driverTrips,trips);
+ $("driverStatus").innerHTML="🟢 Trip started. Vehicle <strong>"+esc(number)+"</strong> is now visible to passengers.";
+ renderAll();
+}
+
+function endTrip(){
+ const number=$("dVehicleNo").value.trim();
+ if(!number){$("driverStatus").textContent="⚠️ Enter vehicle number.";return}
+ write(KEYS.vehicles,read(KEYS.vehicles).filter(v=>v.vehicle_number!==number));
+ let trips=read(KEYS.driverTrips).map(t=>t.vehicle_number===number&&!t.endedAt?({...t,endedAt:new Date().toISOString()}):t);write(KEYS.driverTrips,trips);
+ $("driverStatus").textContent="🔴 Trip ended. Vehicle removed from live passenger list.";
+ renderAll();
+}
+
+function updateDriverGPS(){
+ const number=$("dVehicleNo").value.trim();
+ const active=read(KEYS.vehicles).find(v=>v.vehicle_number===number);
+ if(!active){$("driverStatus").textContent="⚠️ Start a trip first.";return}
+ if(!navigator.geolocation){$("driverStatus").textContent="❌ Geolocation not supported.";return}
+ $("driverStatus").textContent="📡 Getting GPS...";
+ navigator.geolocation.getCurrentPosition(pos=>{
+  active.latitude=pos.coords.latitude;active.longitude=pos.coords.longitude;active.updated_at=new Date().toISOString();
+  write(KEYS.vehicles,read(KEYS.vehicles).map(v=>v.id===active.id?active:v));
+  $("driverStatus").textContent="✅ GPS location updated.";
+  renderAll();
+ },()=>{$("driverStatus").textContent="❌ GPS permission/location unavailable."},{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+}
+
+function renderDriverBookings(){
+ const number=$("dVehicleNo").value.trim();
+ const active=read(KEYS.vehicles).find(v=>v.vehicle_number===number);
+ const all=read(KEYS.bookings).filter(b=>b.vehicleId===number);
+ if(!all.length && !active){$("driverBookings").innerHTML="<p class='muted'>Start a trip and passengers can book the matching vehicle.</p>";return}
+ const bookings=all;
+ $("driverBookings").innerHTML=bookings.length?bookings.map(b=>`<div class="booking">
+ 👤 <strong>${esc(b.name)}</strong> • ${esc(b.phone||"No phone")}<br>
+ 🛣️ ${esc(b.from)} → ${esc(b.to)}<br>
+ 💺 ${b.seats} seat • 💰 Rs ${b.fare} • ${esc(b.status)}
+ </div>`).join(""):"<p class='muted'>No bookings attached to this vehicle yet.</p>";
+}
+
+function renderDriverStats(){
+ const number=$("dVehicleNo").value.trim(),trips=read(KEYS.driverTrips).filter(t=>t.vehicle_number===number),b=read(KEYS.bookings).filter(x=>x.vehicleId===number);
+ $("driverTrips").textContent=trips.length;$("driverBookingCount").textContent=b.length;
+ $("driverSeatsFilled").textContent=b.reduce((n,x)=>n+Number(x.seats||0),0);
+}
+
+function renderOperator(){
+ const v=read(KEYS.vehicles).filter(x=>x.status==="on_route"),b=read(KEYS.bookings);
+ $("opVehicles").textContent=v.length;$("opBookings").textContent=b.length;$("opRoutes").textContent=Object.keys(routeData).length;$("opLocations").textContent=Object.keys(locations).length;
+ $("operatorVehicles").innerHTML=v.length?v.map(x=>`<div class="booking">
+ <strong>🟢 ${esc(x.vehicle_number)} — ${esc(x.vehicle_type)}</strong><br>
+ Driver: ${esc(x.driver_name)} • ${esc(x.route_from)} → ${esc(x.route_to)}<br>
+ Seats: ${x.available_seats}/${x.total_seats} • Fare: Rs ${x.fare}
+ </div>`).join(""):"<p class='muted'>No active vehicles.</p>";
+ $("operatorBookings").innerHTML=b.length?`<table><tr><th>Passenger</th><th>Route</th><th>Vehicle</th><th>Fare</th></tr>${b.slice().reverse().map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.from)} → ${esc(x.to)}</td><td>${esc(x.vehicle)}</td><td>Rs ${x.fare}</td></tr>`).join("")}</table>`:"<p class='muted'>No bookings.</p>";
+ const n=b.length;
+ $("operatorDemand").innerHTML=n>=10?"🔴 <strong>High observed demo demand.</strong><br>Consider increasing vehicle availability.":n>=5?"🟡 <strong>Medium observed demo demand.</strong><br>Monitor seat availability.":"🟢 <strong>Low observed demo demand.</strong><br>Current demo booking volume is manageable.";
+}
+
+async function analyzeDemand(){
+  const n=Number($("passengers").value),cap=Number($("demandCapacity").value)||0,route=$("demandRoute").value,pref=$("demandTime").value;
+  if(!route){
+    $("demandResult").innerHTML="<div class='result error'>⚠️ Select a Chitral route for a route-specific prediction.</div>";
+    return;
+  }
+  const profile=getChitralProfile(route);
+  if(!profile){
+    $("demandResult").innerHTML="<div class='result error'>⚠️ No Chitral planning profile is configured for this route yet.</div>";
+    return;
+  }
+  const active=read(KEYS.vehicles).filter(v=>v.status==="on_route"&&v.route_from+" → "+v.route_to===route);
+  const liveCapacity=active.reduce((sum,v)=>sum+Number(v.available_seats||0),0);
+  const result=estimateChitralDemand(route,pref,n);
+  const expected=result.expected;
+  const available=liveCapacity+cap;
+  const gap=Math.max(0,expected-available);
+  let level,advice;
+  if(gap>0||expected>=Math.max(profile.capacity*1.6,70)){
+    level="HIGH";
+    advice=gap>0
+      ? `Estimated demand exceeds the currently entered/live capacity by ${gap} seat(s). Consider adding a vehicle or increasing trip frequency.`
+      : "The planning profile indicates a high-demand period. Consider additional capacity.";
+  } else if(expected>=Math.max(profile.capacity*.75,35)||expected>Math.max(1,available)*.7){
+    level="MEDIUM";
+    advice="Capacity may become tight. Monitor seat requests and consider keeping an additional vehicle available.";
+  } else {
+    level="LOW";
+    advice="Estimated demand appears manageable with the entered/live capacity, subject to real booking data.";
+  }
+
+  let nearest="";
+  if(pref){
+    const parts=route.split(" → "),r=getRoute(parts[0],parts[1]),d=timeToMinutes(pref);
+    if(r&&d!==null){
+      const c=r.data.slice().sort((a,b)=>Math.abs(timeToMinutes(a[1])-d)-Math.abs(timeToMinutes(b[1])-d))[0];
+      if(c) nearest=`<br>🕐 Nearest configured scheduled departure: <strong>${formatTime(c[1])}</strong> (${c[0]}).`;
+    }
+  }
+
+  $("demandResult").innerHTML=`<div class="result">
+    <strong>🤖 ${level} CHITRAL DEMAND</strong><br>
+    🛣️ Route: <strong>${esc(route)}</strong><br>
+    🧠 Profile baseline: <strong>${result.baseline}</strong> passenger(s) •
+    ${n>0?"User-entered expectation":"AI profile estimate"}: <strong>${expected}</strong><br>
+    🕐 Planning window: <strong>${esc(result.window.label)}</strong> •
+    🌦️ Season: <strong>${esc(result.season.label)}</strong><br>
+    🚐 Live available seats: <strong>${liveCapacity}</strong> • Additional entered capacity: <strong>${cap}</strong><br>
+    💺 Planning capacity: <strong>${available}</strong> • Potential gap: <strong>${gap}</strong>
+    ${nearest}<br>💡 ${esc(advice)}<br>
+    <div id="demandAI" class="ai" style="margin-top:10px">⏳ AI is analysing demand...</div>
+    <small class="muted">${esc(profile.note)} This profile is a prototype planning assumption, not an official ridership forecast.</small>
+  </div>`;
+
+  const profileRows=Object.entries(chitralAIData.demandProfiles).map(([r,p])=>
+    `<tr><td>${esc(r)}</td><td>${p.base}</td><td>${p.capacity}</td><td>${p.morning}</td><td>${p.evening}</td></tr>`
+  ).join("");
+  $("demandDataset").innerHTML=`<strong>📊 Chitral Regional Demand Dataset — Demo Planning Profiles</strong>
+    <p class="muted" style="margin:7px 0">These values are synthetic baseline assumptions for the hackathon demonstration. They show how the system could later learn from real bookings.</p>
+    <table><tr><th>Route</th><th>Base</th><th>Capacity</th><th>Morning</th><th>Evening</th></tr>${profileRows}</table>`;
+
+  await runDemandAI({
+    route, preferred_departure:pref||null, planning_window:result.window.label, season:result.season.label,
+    baseline_passengers_from_profile:result.baseline, expected_passengers:expected, user_entered_expectation:n>0,
+    live_available_seats:liveCapacity, extra_capacity_entered:cap, total_planning_capacity:available, seat_gap:gap,
+    usual_route_capacity:profile.capacity, profile_note:profile.note, weekend_factor:profile.weekend,
+    scheduled_departures:(getRoute(route.split(" → ")[0],route.split(" → ")[1])||{data:[]}).data.map(x=>({vehicle:x[0],departs:x[1],seats:x[4]})),
+    rule_based_level:level
+  });
+}
+
+function askAIFallback(){
+  const raw=$("aiQuestion").value.trim(),q=raw.toLowerCase();
+  let answer="";
+  const passenger=($("pName").value.trim()||"Guest Passenger").toLowerCase();
+  const reqs=read(KEYS.requests).filter(r=>r.passenger.toLowerCase()===passenger);
+  const pending=reqs.filter(r=>r.status==="pending").length,confirmed=reqs.filter(r=>r.status==="accepted").length;
+
+  if(!q) answer="Please type a question. You can ask about Chitral routes, fares, bookings, shared/private rides, demand, locations, seasons or live trips.";
+  else if(q.includes("population")||q.includes("people")) answer="For regional context, the Pakistan Bureau of Statistics Census-2023 reports 278,328 people in Lower Chitral and 195,528 in Upper Chitral. These figures provide context for planning, but they are not passenger-demand counts.";
+  else if(q.includes("density")) answer="PBS Census-2023 reports about 50 persons per square kilometre in Lower Chitral and 23 in Upper Chitral. The prototype uses this only as regional context; it does not convert density directly into ridership.";
+  else if(q.includes("route")||q.includes("location")||q.includes("where")) answer="This prototype includes Chitral Town, Seenlasht, Ayun, Drosh, Booni, Mastuj, Garum Chashma, Khot, Rech and Shagram, with configured route combinations for transport planning.";
+  else if(q.includes("nearest")||q.includes("closest")||q.includes("time")) answer="Enter a preferred departure time. Active drivers on your exact route are sorted by the time difference from your preference, so a 10:00 AM driver is 30 minutes from a 10:30 AM preference.";
+  else if(q.includes("book")||q.includes("seat")) answer="Search your route, choose a matching active driver and request seats. The driver receives the request. Your seat is booked only after the driver accepts it, and the confirmed booking shows the driver's actual departure details.";
+  else if(q.includes("fare")||q.includes("price")||q.includes("cost")) answer="Configured prototype fares include Seenlasht ↔ Chitral Rs 150, Ayun ↔ Chitral Rs 250, Drosh ↔ Chitral Rs 350 and Booni ↔ Chitral Rs 700. Other configured routes have their own prototype fare values.";
+  else if(q.includes("private")||q.includes("shared")) answer="Private and Shared rides are handled separately. A private request matches private drivers. If no private driver is active on the exact route but a shared driver is available, the system can show the shared ride as an alternative.";
+  else if(q.includes("pending")||q.includes("request")) answer=`You currently have ${pending} pending request(s) and ${confirmed} confirmed request(s).`;
+  else if(q.includes("driver")||q.includes("live")) answer="A driver starts a trip with route, vehicle, seats and departure time. The driver then becomes visible to passengers on that exact route. GPS sharing can update the vehicle location while the trip is active.";
+  else if(q.includes("demand")||q.includes("prediction")||q.includes("forecast")) answer="The Chitral Demand module uses a route-specific prototype baseline, time-of-day factors, seasonal planning factors, expected passengers and available capacity. It returns LOW, MEDIUM or HIGH planning demand and a capacity recommendation.";
+  else if(q.includes("winter")||q.includes("summer")||q.includes("season")) answer="The prototype contains conservative seasonal planning factors for winter and summer. These are demonstration assumptions, not official seasonal ridership statistics. Real deployment should learn these factors from historical bookings and road/travel conditions.";
+  else if(q.includes("data")||q.includes("ai")) answer="The AI demo combines configured Chitral locations, route fares, vehicle schedules, booking workflow, passenger requests, live vehicle capacity and route-specific planning profiles. Census population/density values are source-backed context; demand profiles are clearly marked as synthetic demo data.";
+  else if(q.includes("map")||q.includes("gps")||q.includes("location")) answer="The smart map displays the configured Chitral locations and route lines. A driver can share GPS while a trip is active, allowing the prototype to display the latest stored vehicle coordinates.";
+  else answer="I can help with Chitral routes, fares, locations, booking, Shared vs Private rides, driver availability, GPS, population context, demand prediction, time-of-day planning and seasonal assumptions. Try asking one of those.";
+
+  return answer;
+}
+
+// ============================================================
+// LIVE AI LAYER (Groq, OpenAI-compatible chat completions)
+// ============================================================
+const AI_ENDPOINT="https://api.groq.com/openai/v1/chat/completions"; // change to your proxy URL later if you deploy one
+const AI_MODELS=["openai/gpt-oss-120b","openai/gpt-oss-20b"];      // tried in order if one is unavailable for your account
+let AI_MODEL=AI_MODELS[0];
+const AI_KEY_STORE="cst_ai_key";
+const aiHistory=[]; // short chat memory so follow-up questions work
+
+// Paste your hackathon key between the quotes so the app works for anyone who opens it.
+// (A key saved in the AI Settings box overrides this one.)
+const EMBEDDED_KEY="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";
+function getAIKey(){try{return localStorage.getItem(AI_KEY_STORE)||EMBEDDED_KEY}catch{return EMBEDDED_KEY}}
+function aiAvailable(){return !!getAIKey()||!AI_ENDPOINT.includes("api.groq.com")}
+function refreshAIStatus(){
+  const el=$("aiStatus");if(!el)return;
+  el.textContent=getAIKey()?"— ✅ Live AI connected ("+AI_MODEL+")":"— ⚠️ No key: using offline rule-based fallback";
+}
+
+async function callLLM(messages,{json=false,temperature=0.3,maxTokens=1500}={}){
+  const headers={"Content-Type":"application/json"};
+  const key=getAIKey();if(key)headers["Authorization"]="Bearer "+key;
+  const order=[AI_MODEL,...AI_MODELS.filter(m=>m!==AI_MODEL)];
+  let lastErr=null;
+  for(const model of order){
+    let useJson=json;
+    for(let attempt=0;attempt<2;attempt++){
+      const body={model,messages,temperature,max_tokens:maxTokens};
+      if(model.startsWith("openai/gpt-oss"))body.reasoning_effort="low"; // keeps replies fast, leaves room for the answer
+      if(useJson)body.response_format={type:"json_object"};
+      const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),25000);
+      try{
+        const res=await fetch(AI_ENDPOINT,{method:"POST",headers,body:JSON.stringify(body),signal:ctrl.signal});
+        if(!res.ok){
+          let detail="";try{detail=(await res.json()).error?.message||""}catch{}
+          if(res.status===401)throw Object.assign(new Error("Invalid API key."),{fatal:true});
+          if(res.status===429)throw Object.assign(new Error("Rate limit reached - wait a few seconds and retry."),{fatal:true});
+          const err=new Error("AI request failed ("+res.status+") "+detail);
+          if(res.status===404||res.status===403||(res.status===400&&/model/i.test(detail))){lastErr=err;break} // try next model
+          if(res.status===400&&useJson){useJson=false;lastErr=err;continue}                                // retry once without JSON mode
+          throw Object.assign(err,{fatal:true});
+        }
+        const data=await res.json();
+        const text=data.choices?.[0]?.message?.content?.trim()||"";
+        if(!text){lastErr=new Error("The AI returned an empty answer.");break}
+        AI_MODEL=model;return text;
+      }catch(e){
+        if(e.name==="AbortError")throw new Error("AI request timed out.");
+        if(e.fatal)throw e;
+        lastErr=e;break;
+      }finally{clearTimeout(timer)}
+    }
+  }
+  throw lastErr||new Error("AI request failed.");
+}
+
+function straightLineKm(a,b){
+  const A=locations[a],B=locations[b];if(!A||!B)return null;
+  const R=6371,rad=d=>d*Math.PI/180,dLat=rad(B[0]-A[0]),dLon=rad(B[1]-A[1]);
+  const h=Math.sin(dLat/2)**2+Math.cos(rad(A[0]))*Math.cos(rad(B[0]))*Math.sin(dLon/2)**2;
+  return Math.round(2*R*Math.asin(Math.sqrt(h)));
+}
+
+// Everything the assistant is allowed to know, taken from the app's own data.
+function buildTransportContext(){
+  const routes=Object.entries(routeData).map(([k,v])=>({
+    route:k.replace("-"," <-> "),
+    straight_line_distance_km:straightLineKm(k.split("-")[0],k.split("-")[1]),
+    services:v.map(x=>({vehicle:x[0],departs:x[1],fare_rs:x[2],approx_travel_time_min:x[3],seats:x[4]}))
+  }));
+  const live=read(KEYS.vehicles).filter(v=>v.status==="on_route").map(v=>({
+    vehicle_no:v.vehicle_number,type:v.vehicle_type,route:v.route_from+" -> "+v.route_to,
+    departs:v.departure_time,date:v.departure_date,fare_rs:v.fare,seats_available:v.available_seats,seats_total:v.total_seats,gps_shared:!!v.location_shared
+  }));
+  const passenger=($("pName").value.trim()||"Guest Passenger").toLowerCase();
+  const myReqs=read(KEYS.requests).filter(r=>(r.passenger||"").toLowerCase()===passenger);
+  const demand=Object.fromEntries(Object.entries(chitralAIData.demandProfiles).map(([r,p])=>[r,{baseline_passengers:p.base,usual_capacity:p.capacity}]));
+  return {
+    locations:Object.keys(locations),
+    scheduled_routes:routes,
+    live_driver_trips_now:live,
+    this_passenger:{from:$("pFrom").value||null,to:$("pTo").value||null,preferred_departure:$("pDeparture").value||null,
+      pending_requests:myReqs.filter(r=>r.status==="pending").length,accepted_requests:myReqs.filter(r=>r.status==="accepted").length},
+    regional_facts:{lower_chitral_population_2023:chitralAIData.region.lowerChitralPopulation2023,upper_chitral_population_2023:chitralAIData.region.upperChitralPopulation2023,
+      lower_density_per_km2:chitralAIData.region.lowerChitralDensity2023,upper_density_per_km2:chitralAIData.region.upperChitralDensity2023,source:"PBS Census-2023"},
+    demo_demand_profiles_synthetic:demand,
+    app_workflow:"Passenger searches a route, sends a seat request to an active driver; seat is confirmed only after the driver accepts. Shared and Private rides are matched separately; a shared ride may be offered if no private driver is on the exact route. Drivers can share live GPS during a trip."
+  };
+}
+
+const ASSISTANT_SYSTEM=`You are the AI assistant inside "Chitral Smart Transport", a ride-booking app for Chitral, Pakistan. You are a friendly, general-purpose assistant like ChatGPT: you can chat and answer any question (greetings, general knowledge, advice, writing, math, and so on).
+For transport questions (routes, fares, schedules, vehicles, bookings, seats, drivers), treat the JSON context provided as the source of truth. Never invent fares, timings or vehicles that are not in the data. If the data does not have it, say so.
+Distances: each route has straight_line_distance_km (computed from map coordinates). Road distance is longer because mountain roads wind; when asked for distance give the straight-line figure, say road distance is longer, and you may add a rough road estimate labelled as approximate. approx_travel_time_min is the typical trip time in minutes.\nDemand profiles in the data are synthetic demo assumptions, not official ridership.
+Always reply in English only, even if the user writes in another language. Keep answers short unless the user asks for detail.`;
+
+async function askAI(){
+  const raw=$("aiQuestion").value.trim();
+  const out=$("aiAnswer"),btn=$("aiAskBtn");
+  if(!raw){out.innerHTML=`<div class="ai"><strong>🤖 Chitral Transport Assistant</strong><br><br>${esc(askAIFallback())}</div>`;return}
+  if(!aiAvailable()){
+    out.innerHTML=`<div class="ai"><strong>🤖 Chitral Transport Assistant</strong> <span class="badge">Offline fallback</span><br><br>${esc(askAIFallback())}<br><br><span class="muted">Add a Groq API key in AI Settings above to enable the live AI model.</span></div>`;
+    return;
+  }
+  btn.disabled=true;out.innerHTML=`<div class="ai">⏳ Thinking...</div>`;
+  try{
+    const messages=[
+      {role:"system",content:ASSISTANT_SYSTEM},
+      {role:"system",content:"CONTEXT (JSON): "+JSON.stringify(buildTransportContext())},
+      ...aiHistory.slice(-6),
+      {role:"user",content:raw}
+    ];
+    const answer=await callLLM(messages,{temperature:0.6,maxTokens:1500});
+    aiHistory.push({role:"user",content:raw},{role:"assistant",content:answer});
+    out.innerHTML=`<div class="ai"><strong>🤖 Chitral Transport Assistant</strong> <span class="badge">Live AI • ${esc(AI_MODEL)}</span><br><br>${esc(answer).replace(/\n/g,"<br>")}</div>`;
+  }catch(e){
+    out.innerHTML=`<div class="ai"><strong>🤖 Chitral Transport Assistant</strong> <span class="badge">Fallback</span><br><br>${esc(askAIFallback())}<br><br><span class="muted">⚠️ Live AI unavailable: ${esc(e.message)}</span></div>`;
+  }finally{btn.disabled=false}
+}
+
+// ---- AI demand analysis: the app computes features, the LLM reasons over them ----
+const DEMAND_SYSTEM=`You are a transport demand-planning analyst for Chitral, Pakistan. You receive JSON with route, time window, season, a baseline passenger estimate (from synthetic demo profiles), expected passengers, live seats and entered extra capacity.
+Judge the demand level and advise the operator. Respond with ONLY a JSON object:
+{"level":"LOW"|"MEDIUM"|"HIGH","confidence":"low"|"medium"|"high","reasoning":"2-3 sentences","recommendation":"1-2 concrete actions, e.g. add a Coaster at 08:00","risk":"one short sentence on the biggest uncertainty"}
+Write all text fields in English only. Be honest that baselines are demo assumptions. Do not invent numbers that are not in the input.`;
+
+async function runDemandAI(ctx){
+  const box=$("demandAI");if(!box)return;
+  if(!aiAvailable()){box.innerHTML="<strong>🧠 AI analysis</strong><br><span class='muted'>Add a Groq API key in the AI Assistant section for a live AI recommendation. The rule-based estimate above is shown meanwhile.</span>";return}
+  box.innerHTML="⏳ AI is analysing demand...";
+  try{
+    const txt=await callLLM([{role:"system",content:DEMAND_SYSTEM},{role:"user",content:JSON.stringify(ctx)}],{json:true,temperature:0.2,maxTokens:1200});
+    const d=JSON.parse((txt.match(/\{[\s\S]*\}/)||[txt])[0]);
+    const level=["LOW","MEDIUM","HIGH"].includes(String(d.level).toUpperCase())?String(d.level).toUpperCase():"UNKNOWN";
+    const icon=level==="HIGH"?"🔴":level==="MEDIUM"?"🟡":level==="LOW"?"🟢":"⚪";
+    box.innerHTML=`<strong>🧠 AI Demand Analysis</strong> <span class="badge">Live AI • ${esc(AI_MODEL)}</span><br>
+      ${icon} <strong>${esc(level)}</strong> • confidence: ${esc(d.confidence||"n/a")}<br>
+      <strong>Why:</strong> ${esc(d.reasoning||"")}<br>
+      <strong>Recommendation:</strong> ${esc(d.recommendation||"")}<br>
+      <small class="muted">⚠️ ${esc(d.risk||"Baselines are demo assumptions, not official ridership.")}</small>`;
+  }catch(e){
+    box.innerHTML=`<strong>🧠 AI analysis</strong><br><span class="muted">⚠️ Live AI unavailable (${esc(e.message)}). Showing the rule-based estimate above.</span>`;
+  }
+}
+
+function switchRole(role){
+ document.querySelectorAll(".dashboard").forEach(x=>x.classList.remove("active"));
+ $(role).classList.add("active");
+ document.querySelectorAll(".roleBtn").forEach(x=>x.classList.toggle("active",x.dataset.role===role));
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderAll(){renderBookings();renderRequests();renderVehicles();renderIncomingRequests();renderDriverBookings();renderDriverStats();renderOperator();}
+
+document.addEventListener("DOMContentLoaded",()=>{
+ ["pFrom","pTo","dFrom","dTo"].forEach(id=>fillSelect($(id)));
+  $("demandRoute").innerHTML="<option value=''>Select a Chitral route</option>"+Object.keys(chitralAIData.demandProfiles).map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join("");
+ $("demandTime").value=$("pDeparture").value||"10:30";
+ $("searchBtn").onclick=searchTransport;$("locationBtn").onclick=detectLocation;
+ $("demandBtn").onclick=analyzeDemand;$("aiAskBtn").onclick=askAI;
+ $("aiQuestion").addEventListener("keydown",e=>{if(e.key==="Enter")askAI()});
+ $("aiKey").value=getAIKey();refreshAIStatus();
+ $("aiKeySave").onclick=()=>{const k=$("aiKey").value.trim();if(!k){refreshAIStatus();return}try{localStorage.setItem(AI_KEY_STORE,k)}catch{}refreshAIStatus();$("aiKey").value=k};
+ $("aiKeyClear").onclick=()=>{try{localStorage.removeItem(AI_KEY_STORE)}catch{}$("aiKey").value="";refreshAIStatus()};
+ $("startTripBtn").onclick=startTrip;$("endTripBtn").onclick=endTrip;$("driverLocationBtn").onclick=updateDriverGPS;
+ $("shareLocationBtn").onclick=shareDriverLocation;$("stopLocationBtn").onclick=stopDriverLocation;
+ document.querySelectorAll(".roleBtn").forEach(b=>b.onclick=()=>switchRole(b.dataset.role));
+ document.querySelectorAll("[data-scroll]").forEach(b=>b.onclick=()=>$(b.dataset.scroll).scrollIntoView({behavior:"smooth"}));
+ initMap();renderAll();
+ $("demandDataset").innerHTML=`<strong>📊 Chitral Regional Demand Dataset — ${Object.keys(chitralAIData.demandProfiles).length} demo route profiles</strong>
+   <p class="muted" style="margin-top:7px">Select a route and run the analysis to see its profile. Demand values are synthetic planning assumptions for the hackathon, not official ridership statistics.</p>
+   <div class="notice">Regional context: PBS Census-2023 reports Lower Chitral population <strong>${chitralAIData.region.lowerChitralPopulation2023.toLocaleString()}</strong> and Upper Chitral population <strong>${chitralAIData.region.upperChitralPopulation2023.toLocaleString()}</strong>.</div>`;
+ $("pName").addEventListener("input",renderRequests);
+ $("dVehicleNo").addEventListener("input",()=>{renderIncomingRequests();renderDriverBookings();renderDriverStats();});
+  $("dFrom").addEventListener("change",()=>{const f=suggestedFare($("dFrom").value,$("dTo").value);if(f)$("dFare").value=f;});
+  $("dTo").addEventListener("change",()=>{const f=suggestedFare($("dFrom").value,$("dTo").value);if(f)$("dFare").value=f;});
+ setInterval(renderAll,3000);
+});
+</script>
+</body>
+</html>
